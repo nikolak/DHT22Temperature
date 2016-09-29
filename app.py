@@ -59,44 +59,47 @@ def get_data():
         'heat_index_last_20': []
     }
 
-    for d in reversed(DHTData.select().order_by(-DHTData.id).limit(20)):
-        data_template['temperature_c_last_20'].append(d.temp_c)
-        data_template['temperature_f_last_20'].append(d.temp_f)
-        data_template['humidity_last_20'].append(d.humidity)
-        data_template['heat_index_last_20'].append(d.hic)
+    try:
+        for d in reversed(DHTData.select().order_by(-DHTData.id).limit(20)):
+            data_template['temperature_c_last_20'].append(d.temp_c)
+            data_template['temperature_f_last_20'].append(d.temp_f)
+            data_template['humidity_last_20'].append(d.humidity)
+            data_template['heat_index_last_20'].append(d.hic)
 
-    last = DHTData.select().order_by(DHTData.id.desc()).get()
+        last = DHTData.select().order_by(DHTData.id.desc()).get()
 
-    data_template['temperature_current_c'] = last.temp_c
-    data_template['temperature_current_f'] = last.temp_f
-    data_template['humidity_current'] = last.humidity
-    data_template['heat_index_current'] = last.hic
+        data_template['temperature_current_c'] = last.temp_c
+        data_template['temperature_current_f'] = last.temp_f
+        data_template['humidity_current'] = last.humidity
+        data_template['heat_index_current'] = last.hic
 
-    start = arrow.utcnow().replace(hours=-48).to("Europe/Berlin")
-    end = arrow.utcnow().to("Europe/Berlin")
+        start = arrow.utcnow().replace(hours=-48).to("Europe/Berlin")
+        end = arrow.utcnow().to("Europe/Berlin")
 
-    for h in arrow.Arrow.span_range('hour', start, end):
-        dt_start = h[0]
-        dt_end = h[1]
-        data_template['last_48h'].append(dt_start.format('HH'))
-        c_temp_points = []
-        humidity_points = []
-        query = DHTData.select().where(DHTData.timestamp.between(dt_start.datetime,
-                                                                 dt_end.datetime))
+        for h in arrow.Arrow.span_range('hour', start, end):
+            dt_start = h[0]
+            dt_end = h[1]
+            data_template['last_48h'].append(dt_start.format('HH'))
+            c_temp_points = []
+            humidity_points = []
+            query = DHTData.select().where(DHTData.timestamp.between(dt_start.datetime,
+                                                                     dt_end.datetime))
 
-        for point in query:
-            c_temp_points.append(point.temp_c)
-            humidity_points.append(point.humidity)
+            for point in query:
+                c_temp_points.append(point.temp_c)
+                humidity_points.append(point.humidity)
 
-        if c_temp_points:
-            data_template['temperature_48h'].append(float(round(sum(c_temp_points) / len(c_temp_points), 2)))
-        else:
-            data_template['temperature_48h'].append(None)
+            if c_temp_points:
+                data_template['temperature_48h'].append(float(round(sum(c_temp_points) / len(c_temp_points), 2)))
+            else:
+                data_template['temperature_48h'].append(None)
 
-        if humidity_points:
-            data_template['humidity_48h'].append(round(sum(humidity_points) / len(humidity_points), 2))
-        else:
-            data_template['humidity_48h'].append(None)
+            if humidity_points:
+                data_template['humidity_48h'].append(round(sum(humidity_points) / len(humidity_points), 2))
+            else:
+                data_template['humidity_48h'].append(None)
+    except DHTData.DoesNotExist:
+        pass
 
     return render_template("index.html", data=json.dumps(data_template))
 
@@ -122,6 +125,7 @@ def store_data():
 @app.before_first_request
 def init_db():
     DHTData.create_table(fail_silently=True)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')

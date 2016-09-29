@@ -8,7 +8,7 @@ from peewee import *
 
 DEFAULT_DATABASE = "weather_data.db"
 DEBUG = False
-SECRET_AUTH_KEY = "redacted"
+SECRET_AUTH_KEY = os.environ.get('SECRET_KEY', 'changeme')
 
 app = Flask(__name__)
 app.config.from_object(__name__)

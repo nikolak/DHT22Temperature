@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Meta, title, CSS, favicons, etc. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Nikola - Weather Station </title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="css/font-awesome.min.css" rel="stylesheet">
+    <!-- bootstrap-progressbar -->
+    <!-- <link href="../vendors/bootstrap-progressbar/cootstrap-progressbar-3.3.4.min.css" rel="stylesheet"> -->
+
+    <!-- Custom Theme Style -->
+    <link href="css/custom.css" rel="stylesheet">
+    <!--      <script src="js/data.js"></script> -->
+</head>
+
+<body class="nav-md">
+<div class="container body">
+    <div class="main_container">
+
+        <!-- page content -->
+        <div class="right_col" role="main" style="min-height: 250px !important;">
+            <div class="">
+                <div class="row top_tiles" style="margin: 10px 0;">
+                    <div class="col-md-3 col-sm-3 col-xs-6 tile">
+                        <span>Current Temperature (°C)</span>
+                        <h2 id="temperature_c"></h2>
+                        <span class="sparkline_c" style="height: 160px;">
+                      <canvas width="200" height="60"
+                              style="display: inline-block; vertical-align: top; width: 94px; height: 30px;"></canvas>
+                  </span>
+                    </div>
+                    <div class="col-md-3 col-sm-3 col-xs-6 tile">
+                        <span>Current Temperature (°F)</span>
+                        <h2 id="temperature_f"></h2>
+                        <span class="sparkline_f" style="height: 160px;">
+                      <canvas width="200" height="60"
+                              style="display: inline-block; vertical-align: top; width: 94px; height: 30px;"></canvas>
+                  </span>
+                    </div>
+                    <div class="col-md-3 col-sm-3 col-xs-6 tile">
+                        <span>Humidity (%)</span>
+                        <h2 id="humidity_current"></h2>
+                        <span class="sparkline_h" style="height: 160px;">
+                      <canvas width="200" height="60"
+                              style="display: inline-block; vertical-align: top; width: 94px; height: 30px;"></canvas>
+                  </span>
+                    </div>
+                    <div class="col-md-3 col-sm-3 col-xs-6 tile">
+                        <span>Heat Index Celsius</span>
+                        <h2 id="heat_index_current"></h2>
+                        <span class="sparkline_i" style="height: 160px;">
+                      <canvas width="200" height="60"
+                              style="display: inline-block; vertical-align: top; width: 94px; height: 30px;"></canvas>
+                  </span>
+                    </div>
+                </div>
+                <br/>
+
+
+                <div class="row">
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                        <div class="dashboard_graph x_panel">
+                            <div class="row x_title">
+                                <div class="col-md-6">
+                                    <h3>Avg Temperature(°C) / Humidity(%)
+                                        <small>Last 48 hours</small>
+                                    </h3>
+                                </div>
+                                <!-- <div class="col-md-6">
+                                  <div id="reportrange" class="pull-right" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc">
+                                    <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>
+                                    <span>December 30, 2014 - January 28, 2015</span> <b class="caret"></b>
+                                  </div>
+                                </div> -->
+                            </div>
+                            <div class="x_content">
+                                <div class="demo-container" style="height:350px">
+                                    <div id="mainb" style="height:350px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- footer content -->
+    <footer>
+        <div class="pull-right">
+            DHT22 Sensor Data Dashboard by <a href="https://nikolak.com">Nikola Kovacevic</a>
+        </div>
+        <div class="clearfix"></div>
+    </footer>
+    <!-- /footer content -->
+</div>
+</div>
+
+<!-- jQuery -->
+<script src="js/jquery.min.js"></script>
+<!-- Bootstrap -->
+<script src="js/bootstrap.min.js"></script>
+
+<script src="js/jquery.sparkline.min.js"></script>
+
+<script src="js/echarts.min.js"></script>
+
+<!-- jQuery Sparklines -->
+<script>
+    function updateGraphs(data) {
+        $("#temperature_c").text(data['temperature_current_c'] + "°C");
+        $("#temperature_f").text(data['temperature_current_f'] + "°F");
+        $("#humidity_current").text(data['humidity_current'] + "%");
+        $("#heat_index_current").text(data['heat_index_current']);
+
+        $(".sparkline_c").sparkline(data['temperature_c_last_20'], {
+            type: 'bar',
+            height: '40',
+            barWidth: 9,
+            colorMap: {
+                '7': '#a1a1a1'
+            },
+            barSpacing: 2,
+            barColor: '#26B99A',
+            chartRangeMin: Math.min.apply(null, data['temperature_c_last_20']) - 2,
+            chartRangeMax: Math.max.apply(null, data['temperature_c_last_20']) + 2,
+        });
+
+        $(".sparkline_f").sparkline(data['temperature_f_last_20'], {
+            type: 'bar',
+            height: '40',
+            barWidth: 9,
+            colorMap: {
+                '7': '#a1a1a1'
+            },
+            barSpacing: 2,
+            barColor: '#26B99A',
+            chartRangeMin: Math.min.apply(null, data['temperature_f_last_20']) - 2,
+            chartRangeMax: Math.max.apply(null, data['temperature_f_last_20']) + 2
+        });
+
+        $(".sparkline_i").sparkline(data['heat_index_last_20'], {
+            type: 'bar',
+            height: '40',
+            barWidth: 9,
+            colorMap: {
+                '7': '#a1a1a1'
+            },
+            barSpacing: 2,
+            barColor: '#26B99A',
+            chartRangeMin: Math.min.apply(null, data['heat_index_last_20']) - 2,
+            chartRangeMax: Math.max.apply(null, data['heat_index_last_20']) + 2
+        });
+
+
+        $(".sparkline_h").sparkline(data['humidity_last_20'], {
+            type: 'line',
+            width: '200',
+            height: '40',
+            lineColor: '#26B99A',
+            fillColor: 'rgba(223, 223, 223, 0.57)',
+            lineWidth: 2,
+            spotColor: '#26B99A',
+            minSpotColor: '#26B99A',
+            chartRangeMin: Math.min.apply(null, data['humidity_last_20']) - 2,
+            chartRangeMax: Math.max.apply(null, data['humidity_last_20']) + 2
+        });
+        var theme = {
+            color: [
+                '#26B99A', '#34495E', '#BDC3C7', '#3498DB',
+                '#9B59B6', '#8abb6f', '#759c6a', '#bfd3b7'
+            ],
+
+            title: {
+                itemGap: 8,
+                textStyle: {
+                    fontWeight: 'normal',
+                    color: '#408829'
+                }
+            },
+
+            dataRange: {
+                color: ['#1f610a', '#97b58d']
+            },
+
+            toolbox: {
+                color: ['#408829', '#408829', '#408829', '#408829']
+            },
+
+            tooltip: {
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                axisPointer: {
+                    type: 'line',
+                    lineStyle: {
+                        color: '#408829',
+                        type: 'dashed'
+                    },
+                    crossStyle: {
+                        color: '#408829'
+                    },
+                    shadowStyle: {
+                        color: 'rgba(200,200,200,0.3)'
+                    }
+                }
+            },
+
+            dataZoom: {
+                dataBackgroundColor: '#eee',
+                fillerColor: 'rgba(64,136,41,0.2)',
+                handleColor: '#408829'
+            },
+            grid: {
+                borderWidth: 0
+            },
+
+            categoryAxis: {
+                axisLine: {
+                    lineStyle: {
+                        color: '#408829'
+                    }
+                },
+                splitLine: {
+                    lineStyle: {
+                        color: ['#eee']
+                    }
+                }
+            },
+
+            valueAxis: {
+                axisLine: {
+                    lineStyle: {
+                        color: '#408829'
+                    }
+                },
+                splitArea: {
+                    show: true,
+                    areaStyle: {
+                        color: ['rgba(250,250,250,0.1)', 'rgba(200,200,200,0.1)']
+                    }
+                },
+                splitLine: {
+                    lineStyle: {
+                        color: ['#eee']
+                    }
+                }
+            },
+            timeline: {
+                lineStyle: {
+                    color: '#408829'
+                },
+                controlStyle: {
+                    normal: {color: '#408829'},
+                    emphasis: {color: '#408829'}
+                }
+            },
+            textStyle: {
+                fontFamily: 'Arial, Verdana, sans-serif'
+            }
+        }
+
+        var echartBarLine = echarts.init(document.getElementById('mainb'), theme);
+
+        echartBarLine.setOption({
+            title: {
+                x: 'center',
+                y: 'top',
+                padding: [0, 0, 00, 0],
+
+                textStyle: {
+                    fontSize: 15,
+                    fontWeight: 'normal'
+                }
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            toolbox: {
+                show: true,
+                feature: {
+                    dataView: {
+                        show: true,
+                        readOnly: false,
+                        title: "Text View",
+                        lang: [
+                            "Text View",
+                            "Close",
+                            "Refresh",
+                        ],
+                    },
+                    restore: {
+                        show: true,
+                        title: 'Restore'
+                    },
+                    saveAsImage: {
+                        show: true,
+                        title: 'Save'
+                    }
+                }
+            },
+            calculable: true,
+            legend: {
+                data: ['Humidity', 'Temperature'],
+                y: 'bottom'
+            },
+            xAxis: [{
+                type: 'category',
+                data: data['last_48h']
+            }],
+            yAxis: [{
+                type: 'value',
+                name: 'Humidity',
+                axisLabel: {
+                    formatter: '{value} %'
+                }
+            }, {
+                type: 'value',
+                name: 'Temperature',
+                axisLabel: {
+                    formatter: '{value} °C'
+                }
+            }],
+            series: [{
+                name: 'Humidity',
+                type: 'bar',
+                data: data['humidity_48h']
+            }, {
+                name: 'Temperature',
+                type: 'line',
+                yAxisIndex: 1,
+                data: data['temperature_48h']
+            }]
+        })
+    }
+</script>
+<script>
+    $(document).ready(function () {
+        $.ajax({
+            url: "http://104.236.117.5:5000/api/v1/data/",
+            type: "GET",
+            dataType: 'json',
+            success: function (api_data) {
+                data = api_data;
+                updateGraphs(api_data);
+            },
+            fail: function success() {
+                alert("Fetching data from the API failed.");
+            }
+        });
+    });
+</script>
+</body>
+</html>

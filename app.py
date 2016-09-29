@@ -119,6 +119,9 @@ def store_data():
     return jsonify({'store': 'OK'})
 
 
+@app.before_first_request
+def init_db():
+    DHTData.create_table(fail_silently=False)
+
 if __name__ == '__main__':
-    DHTData.create_table(fail_silently=True)
     app.run(host='0.0.0.0')

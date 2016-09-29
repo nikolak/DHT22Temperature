@@ -7,3 +7,4 @@ peewee==2.8.1
 Werkzeug==0.11.10
 arrow==0.8.0
 gunicorn==19.6.0
+psycopg2==2.6.2

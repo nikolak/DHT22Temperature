@@ -1,19 +1,32 @@
-import arrow
 import json
-from flask import Flask, request, jsonify, abort
+import os
+import urlparse
 
+import arrow
+from flask import Flask, jsonify, abort, request, render_template
 from peewee import *
 
-DATABASE = "weather_data.db"
+DEFAULT_DATABASE = "weather_data.db"
 DEBUG = False
-SECRET_AUTH_KEY = "secret key"
+SECRET_AUTH_KEY = "redacted"
 
 app = Flask(__name__)
 app.config.from_object(__name__)
 
 # create a peewee database instance -- our models will use this database to
 # persist information
-database = SqliteDatabase(DATABASE)
+
+try:
+    db_url = os.environ["DATABASE_URL"]
+    urlparse.uses_netloc.append('postgres')
+    url = urlparse.urlparse(db_url)
+    database = PostgresqlDatabase(database=url.path[1:],
+                                  user=url.username,
+                                  password=url.password,
+                                  host=url.hostname,
+                                  port=url.port)
+except KeyError:
+    database = SqliteDatabase(DEFAULT_DATABASE)
 
 
 class BaseModel(Model):
@@ -30,7 +43,8 @@ class DHTData(BaseModel):
     hif = FloatField()
 
 
-def update_data_file():
+@app.route('/', methods=['GET'])
+def get_data():
     data_template = {
         'last_48h': [],
         'humidity_48h': [],
@@ -53,10 +67,10 @@ def update_data_file():
 
     last = DHTData.select().order_by(DHTData.id.desc()).get()
 
-    data_template['temperature_current_c'] = str(last.temp_c)
-    data_template['temperature_current_f'] = str(last.temp_f)
-    data_template['humidity_current'] = str(last.humidity)
-    data_template['heat_index_current'] = str(last.hic)
+    data_template['temperature_current_c'] = last.temp_c
+    data_template['temperature_current_f'] = last.temp_f
+    data_template['humidity_current'] = last.humidity
+    data_template['heat_index_current'] = last.hic
 
     start = arrow.utcnow().replace(hours=-48).to("Europe/Berlin")
     end = arrow.utcnow().to("Europe/Berlin")
@@ -75,7 +89,7 @@ def update_data_file():
             humidity_points.append(point.humidity)
 
         if c_temp_points:
-            data_template['temperature_48h'].append(round(sum(c_temp_points) / len(c_temp_points), 2))
+            data_template['temperature_48h'].append(float(round(sum(c_temp_points) / len(c_temp_points), 2)))
         else:
             data_template['temperature_48h'].append(None)
 
@@ -84,15 +98,14 @@ def update_data_file():
         else:
             data_template['humidity_48h'].append(None)
 
-    with open("js/data.js", "w") as out:
-        out.write("var data=" + json.dumps(data_template))
+    return render_template("index.html", data=json.dumps(data_template))
 
 
 @app.route('/api/v1/update/', methods=['POST'])
 def store_data():
     data = request.form
     if data.get('key') != SECRET_AUTH_KEY:
-        abort(404)
+        abort(400)
 
     dht_object = DHTData(timestamp=arrow.utcnow().to("Europe/Berlin").datetime,
                          temp_c=float(data.get('celsius', 0)),
@@ -103,10 +116,7 @@ def store_data():
                          )
     dht_object.save()
 
-    if arrow.utcnow().minute in range(0, 60, 2):
-        update_data_file()
-
-    return jsonify({'results': 'OK'})
+    return jsonify({'store': 'OK'})
 
 
 if __name__ == '__main__':

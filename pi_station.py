@@ -102,14 +102,18 @@ if __name__ == '__main__':
 
             print '-' * 50
             print "UTC {}".format(dt.utcnow())
-            print 'Humidity: {}%\tTemperature:{}°C\t{}°F\tHeat Index:{}°C\t{}°F'.format(temp_c,
+            print 'Humidity: {}%\tTemperature:{}°C\t{}°F\tHeat Index:{}°C\t{}°F'.format(humidity,
+                                                                                        temp_c,
                                                                                         temp_f,
-                                                                                        humidity,
                                                                                         hic,
                                                                                         hif)
+            assert -10 < temp_c < 40
+            assert 10 < humidity < 90
             post_data(temp_c, temp_f, humidity, hic, hif)
         except KeyboardInterrupt:
             print "Exiting..."
             exit(0)
+        except AssertionError:
+            print 'Data assertion failed'
         except Exception:
             traceback.print_exc(file=sys.stdout)

@@ -56,8 +56,9 @@ def get_data():
         'temperature_c_last_20': [],
         'temperature_f_last_20': [],
         'humidity_last_20': [],
-        'heat_index_last_20': []
+        'heat_index_last_20': [],
     }
+    last_update = "Not available"
 
     try:
         for d in reversed(DHTData.select().order_by(-DHTData.id).limit(20)):
@@ -72,6 +73,9 @@ def get_data():
         data_template['temperature_current_f'] = last.temp_f
         data_template['humidity_current'] = last.humidity
         data_template['heat_index_current'] = last.hic
+        last_dt = arrow.get(last.timestamp)
+        last_update = "{} - {}".format(last_dt.humanize(),
+                                       last_dt.isoformat())
 
         start = arrow.utcnow().replace(hours=-48).to("Europe/Berlin")
         end = arrow.utcnow().to("Europe/Berlin")
@@ -101,7 +105,9 @@ def get_data():
     except DHTData.DoesNotExist:
         pass
 
-    return render_template("index.html", data=json.dumps(data_template))
+    return render_template("index.html",
+                           data=json.dumps(data_template),
+                           last_update=last_update)
 
 
 @app.route('/api/v1/update/', methods=['POST'])

@@ -116,4 +116,4 @@ if __name__ == '__main__':
         except AssertionError:
             print 'Data assertion failed'
         except Exception:
-            traceback.print_exc(file=sys.stdout)
+            traceback.print_exc(file=sys.stderr)
